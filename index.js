@@ -28,15 +28,10 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const restaurantUpload = client.db("FoodiesGalaxy").collection("restaurantMeal")
+    const customerOrder = client.db("FoodiesGalaxy").collection("customerOrder")
 
 
-
-
-
-
-
-
-    //resturat home data upload
+    //resturat home data 
     app.post("/todays-meal",async (req,res)=>{
       const data = req.body
       console.log(data);
@@ -52,6 +47,14 @@ async function run() {
       const query = {_id:new ObjectId(id)}
       const data = await restaurantUpload.findOne(query)
       res.send(data)
+    })
+
+    //Ordered data 
+    app.post("/customer-ordered",async(req,res)=>{
+      const order = req.body;
+      const result = await customerOrder.insertOne(order)
+      res.send(result)
+      console.log(order);
     })
 
 
