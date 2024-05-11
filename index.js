@@ -56,13 +56,45 @@ async function run() {
       const order = req.body;
       const result = await customerOrder.insertOne(order)
       res.send(result)
-      console.log(order);
     })
 
 
     app.get('/ordered',async(req,res)=>{
      const result = await customerOrder.find().toArray()
      res.send(result)
+    })
+
+    app.get('/myOrder/:email',async(req,res)=>{
+      const email = req.params.email;
+      const query = {email:email}
+      const result = await customerOrder.find(query).toArray()
+      res.send(result)
+    })
+
+
+    app.get('/updateQty/:id',async(req,res)=>{
+      console.log(req);
+      const id = req.params.id;
+      const query =  {_id:new ObjectId(id)}
+      const result = await customerOrder.findOne(query)
+      res.send(result)
+      
+    })
+
+    app.delete('/removeOrder/:email',async(req,res)=>{
+      const email = req.params.email;
+      const query = {email:email}
+      const result = await customerOrder.deleteMany(query)
+      res.send(result)
+    })
+
+    app.patch('/updatedQuantity/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id:new ObjectId(id) }
+      const quantity = req.body;
+      const updateData = {$set:quantity};
+      const result = await customerOrder.updateOne(query,updateData)
+      res.send(result)
     })
 
 
