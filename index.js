@@ -37,9 +37,22 @@ async function run() {
     app.post("/todays-meal",async (req,res)=>{
       const data = req.body
       console.log(data);
-      const {result} = await restaurantUpload.insertOne(data)
+      const result = await restaurantUpload.insertOne(data)
       res.send(result)
     })
+    
+    app.post('/updatePurchase/:id',async(req,res)=>{
+      const query = {_id:new ObjectId(req.params.id)}
+      const totalSell = req.body;
+      const update = {$set:totalSell}
+      const result = await restaurantUpload.updateOne(query,update)
+      console.log(result);
+      res.send(result)
+
+      console.log(result);
+      
+    })
+
     app.get('/todaysMeal',async(req,res)=>{
       const data = await restaurantUpload.find().toArray()
       res.send(data)
