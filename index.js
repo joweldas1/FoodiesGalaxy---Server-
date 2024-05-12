@@ -14,9 +14,9 @@ app.use(express.json())
 
 
 
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.4mwwnz0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.4mwwnz0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 // const uri = "mongodb://localhost:27017"
-       const uri=  "mongodb://localhost:27017/?directConnection=true"
+      //  const uri=  "mongodb://localhost:27017/?directConnection=true"
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -48,13 +48,31 @@ async function run() {
       const result = await restaurantUpload.updateOne(query,update)
       console.log(result);
       res.send(result)
-
-      console.log(result);
       
     })
 
-    app.get('/todaysMeal',async(req,res)=>{
+    app.get("/all-food",async(req,res)=>{
       const data = await restaurantUpload.find().toArray()
+      res.send(data)
+    })
+
+    app.get('/todaysMeal',async(req,res)=>{
+      const category = req.query.category;
+      const sort = req.query.sort;
+      const sell = req.query.sell;
+      const searchQuery = req.query.search
+      const search=String(searchQuery)
+
+      let query = {}
+      let sortQuery={}
+
+
+      if(category) query.category=category;
+      if(search) query.foodName={$regex:search , $options:'i'}
+      if(sell)sortQuery.totalSell=(sort==="asc")?1:-1;
+      if(sort) sortQuery.price=(sort==="asc")?1:-1;
+
+      const data = await restaurantUpload.find(query).sort(sortQuery).toArray()
       res.send(data)
     })
     app.get('/food-details/:id',async(req,res)=>{
