@@ -9,9 +9,19 @@ const app = express()
 const port =process.env.PORT||3000
 
 
-app.use(cors())
-app.use(express.json())
+app.use(cors({ origin: [
+  "http://localhost:5173",
+  "https://foodies-galaxy-server.vercel.app",
+  "https://foodiesgalaxy-3cae2.web.app",
+],
+credentials: true,}))
 
+app.use(express.json())
+// const cookieOptions = {
+//   httpOnly: true,
+//   secure: process.env.NODE_ENV === "production",
+//   sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+// };
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.4mwwnz0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -29,8 +39,9 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    const restaurantUpload = client.db("FoodiesGalaxy").collection("restaurantMeal")
-    const customerOrder = client.db("FoodiesGalaxy").collection("customerOrder")
+    const restaurantUpload = client.db("FoodiesGalaxy").collection("restaurantMeal");
+    const customerOrder = client.db("FoodiesGalaxy").collection("customerOrder");
+    const userPostedData = client.db("FoodiesGalaxy").collection("userPostedData")
 
 
     //resturat home data 
@@ -137,6 +148,20 @@ async function run() {
       res.send(result)
 
     })
+
+    //-----> User Posted post, get API
+    app.post('/user-post',async(req,res)=>{
+      const data = req.body;
+      const result = await userPostedData.insertOne(data)
+      res.send(result)
+    })
+
+    app.get('/posted-data',async(req,res)=>{
+      const result = await userPostedData.find().toArray()
+      res.send(result)
+    })
+
+    
 
 
 
