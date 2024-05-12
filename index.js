@@ -161,6 +161,75 @@ async function run() {
       res.send(result)
     })
 
+    //-----> single use data get and delete
+    app.get('/user-uploaded/:email',async(req,res)=>{
+      const email = req.params.email;
+      const query = {'uploadData.email':email}
+      
+      const result = await userPostedData.find(query).toArray()
+      res.send(result)
+    })
+    
+
+    app.delete('/delete-user-post/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id:new ObjectId(id)}
+      const result = await userPostedData.deleteOne(query)
+      res.send(result)
+    })
+
+    app.get('/update-user-post/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id:new ObjectId(id)}
+      const result = await userPostedData.findOne(query)
+      res.send(result)
+    })
+
+
+    app.put('/update-user-post/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id:new ObjectId(id)}
+      const options ={upsert:true}
+      const updateData = req.body
+      const uploadServer ={
+        $set:{
+          "uploadData.imgURL":updateData.imgURL,
+          "uploadData.itemName":updateData.itemName,
+          "uploadData.country":updateData.country,
+          "uploadData.review":updateData.review,
+          "uploadData.ingredients":updateData.ingredients,
+          "uploadData.description":updateData.description,
+          "uploadData.updatedTime":updateData.updatedTime
+        }
+      }
+      const result = await userPostedData.updateOne(query,uploadServer,options);
+      res.send(result)
+
+    })
+  //  app.put('/update/:id',async(req,res)=>{
+  //     const id={_id:new ObjectId(req.params.id)}
+  //     const updateData=req.body;
+  //     const options = {upsert:true}
+  //     console.log(updateData);
+  //     const updatedToServer={
+  //       $set:{
+  //         image:updateData.image,
+  //         tourists_spot_name:updateData.tourists_spot_name,
+  //         country_Name:updateData.country_Name,
+  //         location:updateData.location,
+  //         description:updateData.description,
+  //         cost:updateData.cost,
+  //         seasonality:updateData.seasonality,
+  //         travel_time:updateData.travel_time,
+  //         totalVisitorsPerYear:updateData.totalVisitorsPerYear,
+  //       }
+  //     };
+  //     const result=await userData.updateOne(id,updatedToServer,options)
+  //     res.send(result)
+
+
+  //   })
+
     
 
 
