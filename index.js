@@ -116,25 +116,7 @@ async function run() {
       res.send(data)
     })
 
-    app.get('/todaysMeal',async(req,res)=>{
-      const category = req.query.category;
-      const sort = req.query.sort;
-      const sell = req.query.sell;
-      const searchQuery = req.query.search
-      const search=String(searchQuery)
-
-      let query = {}
-      let sortQuery={}
-
-
-      if(category) query.category=category;
-      if(search) query.foodName={$regex:search , $options:'i'}
-      if(sell)sortQuery.totalSell=(sort==="asc")?1:-1;
-      if(sort) sortQuery.price=(sort==="asc")?1:-1;
-
-      const data = await restaurantUpload.find(query).sort(sortQuery).toArray()
-      res.send(data)
-    })
+    
     app.get('/food-details/:id',async(req,res)=>{
       const id = req.params.id
       const query = {_id:new ObjectId(id)}
@@ -236,6 +218,7 @@ async function run() {
     })
 
 
+
     app.put('/update-user-post/:id',async(req,res)=>{
       const id = req.params.id;
       const query = {_id:new ObjectId(id)}
@@ -256,31 +239,39 @@ async function run() {
       res.send(result)
 
     })
-  //  app.put('/update/:id',async(req,res)=>{
-  //     const id={_id:new ObjectId(req.params.id)}
-  //     const updateData=req.body;
-  //     const options = {upsert:true}
-  //     console.log(updateData);
-  //     const updatedToServer={
-  //       $set:{
-  //         image:updateData.image,
-  //         tourists_spot_name:updateData.tourists_spot_name,
-  //         country_Name:updateData.country_Name,
-  //         location:updateData.location,
-  //         description:updateData.description,
-  //         cost:updateData.cost,
-  //         seasonality:updateData.seasonality,
-  //         travel_time:updateData.travel_time,
-  //         totalVisitorsPerYear:updateData.totalVisitorsPerYear,
-  //       }
-  //     };
-  //     const result=await userData.updateOne(id,updatedToServer,options)
-  //     res.send(result)
+    app.get('/todaysMeal',async(req,res)=>{
+      const category = req.query.category;
+      const sort = req.query.sort;
+      const sell = req.query.sell;
+      const searchQuery = req.query.search
+      const search=String(searchQuery)
+
+      const page = parseFloat(req.query.page);
+      const size = parseFloat(req.query.size)-1;  
+
+      let query = {}
+      let sortQuery={}
+      console.log("page--> and size-->",page,size);
 
 
-  //   })
+      if(category) query.category=category;
+      if(search) query.foodName={$regex:search , $options:'i'}
+      if(sell)sortQuery.totalSell=(sort==="asc")?1:-1;
+      if(sort) sortQuery.price=(sort==="asc")?1:-1;
 
-    
+      const data = await restaurantUpload.find(query).sort(sortQuery).skip(size*page).limit(size).toArray()
+      res.send(data)
+    })
+
+    app.get('/count',async(req,res)=>{
+      const category = req.query.category
+      
+      let query = {};
+      if(category){query.category=category}
+      const data = await restaurantUpload.countDocuments()
+      res.send({data})
+    })
+
 
 
 
