@@ -1,5 +1,7 @@
 const express = require('express')
 const cors = require('cors')
+const jwt = require('jsonwebtoken');
+const cookieParser = require("cookie-parser");
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
@@ -7,6 +9,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express()
 const port =process.env.PORT||3000
+
 
 
 app.use(cors({ origin: [
@@ -17,20 +20,40 @@ app.use(cors({ origin: [
 credentials: true,}))
 
 app.use(express.json())
-// const cookieOptions = {
-//   httpOnly: true,
-//   secure: process.env.NODE_ENV === "production",
-//   sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-// };
+app.use(cookieParser())
+
+//token verify middle wire
+const verifyToken=async(req,res,next)=>{
+  const token = req.cookies?.token
+
+  if(!token){return res.status(401).send({message:"Authorization failed"})}
+  
+  jwt.verify(token,process.env.TOKEN,(err,decode)=>{
+    if(err){return res.status(403).send({message:"Forbidden Access"})}
+    return req.decode=decode.loggedUser
+  })
+  next()
+
+}
+
+//user mail and token carry email verify
+const authorizeUser = (req,res,next) =>{
+   const tokenEmail = req.decode ;
+  const userEmail = req.params.email
+  if(tokenEmail!==userEmail){return res.status(403).send({message:"Forbidden request"})}
+  
+console.log("----->userEmail authorise middlewire 43",userEmail);
+console.log("----->userEmail authorise middlewire 44",tokenEmail);
+next()
+  
+}
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.4mwwnz0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 // const uri = "mongodb://localhost:27017"
-      //  const uri=  "mongodb://localhost:27017/?directConnection=true"
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
-  serverApi: {
+    serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
@@ -42,6 +65,32 @@ async function run() {
     const restaurantUpload = client.db("FoodiesGalaxy").collection("restaurantMeal");
     const customerOrder = client.db("FoodiesGalaxy").collection("customerOrder");
     const userPostedData = client.db("FoodiesGalaxy").collection("userPostedData")
+
+    //token creation
+    app.post("/jwt",async(req,res)=>{
+      const user = req.body;
+      const result = jwt.sign(user,process.env.TOKEN,{expiresIn:"365Days"})
+      res
+     .cookie('token',result,{
+      httpOnly:true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      })
+      .send({success:true})
+    })
+
+    app.get('/logout', async(req,res)=>{
+      res
+      .clearCookie("token",{
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        maxAge:0.
+      })
+      .send({success:true})
+    })
+
+
 
 
     //resturat home data 
@@ -62,7 +111,7 @@ async function run() {
       
     })
 
-    app.get("/all-food",async(req,res)=>{
+    app.get("/all-food", async(req,res)=>{
       const data = await restaurantUpload.find().toArray()
       res.send(data)
     })
@@ -106,7 +155,8 @@ async function run() {
      res.send(result)
     })
 
-    app.get('/myOrder/:email',async(req,res)=>{
+    app.get('/myOrder/:email',verifyToken,async(req,res)=>{
+      console.log('161-->',verifyToken)
       const email = req.params.email;
       const query = {email:email}
       const result = await customerOrder.find(query).toArray()
