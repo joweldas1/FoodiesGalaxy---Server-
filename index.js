@@ -239,36 +239,53 @@ async function run() {
       res.send(result)
 
     })
-    app.get('/todaysMeal',async(req,res)=>{
+    app.get('/todaysMeal', async (req, res) => {
       const category = req.query.category;
-      const sort = req.query.sort;
+      const price = req.query.price;
       const sell = req.query.sell;
-      const searchQuery = req.query.search
-      const search=String(searchQuery)
-
+      const searchQuery = req.query.search;
       const page = parseFloat(req.query.page);
-      const size = parseFloat(req.query.size)-1;  
+      const size = parseFloat(req.query.size);  
 
-      let query = {}
-      let sortQuery={}
-      console.log("page--> and size-->",page,size);
+      console.log([page,size]);
+  
+      let query = {};
+      let sortQuery = {};
+  
+      if (searchQuery) {query.foodName = {$regex: searchQuery, $options: 'i'};}
+      if (category) {query.category = category;}
+      if (sell) {sortQuery.totalSell = (sell === "asc") ? 1 : -1;}
+      if (price) {sortQuery.price = (price === "asc") ? 1 : -1;}
+  
+      try {
+        const data = await restaurantUpload.find(query).sort(sortQuery).skip((page-1)* size).limit(size).toArray();
 
-
-      if(category) query.category=category;
-      if(search) query.foodName={$regex:search , $options:'i'}
-      if(sell)sortQuery.totalSell=(sort==="asc")?1:-1;
-      if(sort) sortQuery.price=(sort==="asc")?1:-1;
-
-      const data = await restaurantUpload.find(query).sort(sortQuery).skip(size*page).limit(size).toArray()
-      res.send(data)
-    })
+          res.send(data);
+      } catch (error) {
+          res.status(500).send("Error fetching today's meals");
+      }
+  });
+ 
 
     app.get('/count',async(req,res)=>{
-      const category = req.query.category
+      const category = req.query.category;
+      const price = req.query.price;
+      const sell = req.query.sell;
+      const searchQuery = req.query.search;
+      const page = parseFloat(req.query.page);
+      const size = parseFloat(req.query.size);  
+
+
+         
       
       let query = {};
-      if(category){query.category=category}
-      const data = await restaurantUpload.countDocuments()
+      if (searchQuery) {query.foodName = {$regex: searchQuery, $options: 'i'};}
+      if (category) {query.category = category;}
+      if (sell) {sortQuery.totalSell = (sell === "asc") ? -1 : 1;}
+      
+
+
+      const data = await restaurantUpload.countDocuments(query)
       res.send({data})
     })
 
