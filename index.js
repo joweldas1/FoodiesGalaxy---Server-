@@ -22,10 +22,11 @@ credentials: true,}))
 app.use(express.json())
 app.use(cookieParser())
 
+
+
 //token verify middle wire
 const verifyToken=async(req,res,next)=>{
   const token = req.cookies?.token
-
   if(!token){return res.status(401).send({message:"Authorization failed"})}
   
   jwt.verify(token,process.env.TOKEN,(err,decode)=>{
@@ -33,17 +34,16 @@ const verifyToken=async(req,res,next)=>{
     return req.decode=decode.loggedUser
   })
   next()
-
 }
 
 //user mail and token carry email verify
 const authorizeUser = (req,res,next) =>{
    const tokenEmail = req.decode ;
-  const userEmail = req.params.email
-  if(tokenEmail!==userEmail){return res.status(403).send({message:"Forbidden request"})}
+   const userEmail = req.params.email
+   if(tokenEmail!==userEmail){return res.status(403).send({message:"Forbidden request"})}
   
-console.log("----->userEmail authorise middlewire 43",userEmail);
-console.log("----->userEmail authorise middlewire 44",tokenEmail);
+console.log("----->userEmail",userEmail);
+console.log("----->tokenEmail",tokenEmail);
 next()
   
 }
@@ -89,8 +89,6 @@ async function run() {
       })
       .send({success:true})
     })
-
-
 
 
     //resturat home data 
@@ -144,7 +142,6 @@ async function run() {
       const result = await customerOrder.find(query).toArray()
       res.send(result)
     })
-
 
     app.get('/updateQty/:id',async(req,res)=>{
       console.log(req);
@@ -218,7 +215,6 @@ async function run() {
     })
 
 
-
     app.put('/update-user-post/:id',async(req,res)=>{
       const id = req.params.id;
       const query = {_id:new ObjectId(id)}
@@ -239,6 +235,7 @@ async function run() {
       res.send(result)
 
     })
+
     app.get('/todaysMeal', async (req, res) => {
       const category = req.query.category;
       const price = req.query.price;
@@ -290,9 +287,6 @@ async function run() {
     })
 
 
-
-
-
    
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
@@ -300,13 +294,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
-
-
-
-
-
-
-
 
 
 
