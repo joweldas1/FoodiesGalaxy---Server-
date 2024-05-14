@@ -99,9 +99,10 @@ async function run() {
       res.send(result)
     })
     
-    app.post('/updatePurchase/:id',async(req,res)=>{
+    app.patch('/updatePurchase/:id',async(req,res)=>{
       const query = {_id:new ObjectId(req.params.id)}
       const totalSell = req.body;
+      console.log("totalSell----->",totalSell);
       const update = {$set:totalSell}
       const result = await restaurantUpload.updateOne(query,update)
       console.log(result);
@@ -251,8 +252,10 @@ async function run() {
   
       if (searchQuery) {query.foodName = {$regex: searchQuery, $options: 'i'};}
       if (category) {query.category = category;}
-      if (sell) {sortQuery.totalSell = (sell === "asc") ? 1 : -1;}
-      if (price) {sortQuery.price = (price === "asc") ? 1 : -1;}
+      if (sell) {sortQuery.totalSell = (sell === "asc") ?1:-1;}
+      if (price) {
+        const newPrize = new RegExp(`^(${price}\\.\\d+|\\d+\\.\\d+) USD$`, 'i');
+        sortQuery.price = {$regex: newPrize}}
   
       try {
         const data = await restaurantUpload.find(query).sort(sortQuery).skip((page-1)* size).limit(size).toArray();
