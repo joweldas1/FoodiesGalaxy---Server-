@@ -101,9 +101,9 @@ async function run() {
     
     app.patch('/updatePurchase/:id',async(req,res)=>{
       const query = {_id:new ObjectId(req.params.id)}
-      const totalSell = req.body;
+      const {totalSell,remain} = req.body;
       console.log("totalSell----->",totalSell);
-      const update = {$set:totalSell}
+      const update = {$set:{totalSell,remain}}
       const result = await restaurantUpload.updateOne(query,update)
       console.log(result);
       res.send(result)
@@ -216,6 +216,50 @@ async function run() {
     })
 
 
+  
+
+    app.get('/todaysMeal', async (req, res) => {
+      const category = req.query.category;
+      const price =req.query.price
+      const sell = req.query.sell;
+      const search = req.query.search;
+      const page = parseFloat(req.query.page);
+      const size = parseFloat(req.query.size)
+      
+
+       let query = {}
+       let sortQuery={}
+
+       if(category)query.category=category
+       if(price){sortQuery.price=(price==="asc")?1:-1}
+       if(sell){sortQuery.totalSell =(sell==="asc")?1:-1}
+      if(search){query.foodName={$regex:search, $options: 'i'}}
+      const data = await restaurantUpload.find(query).sort(sortQuery).skip((page-1)*size).limit(size).toArray()
+      res.send(data) 
+
+  });
+ 
+  
+    
+  
+    app.get('/count', async (req, res) => {
+      try {
+        const category = req.query.category;
+        const search = req.query.search;
+
+       let query = {}
+
+       if(category)query.category=category
+       if(search){query.foodName={$regex:search, $options: 'i'}}
+  
+        const count = await restaurantUpload.countDocuments(query)
+        res.send({ data: count });
+      } catch (error) {
+        res.status(500).send({ error: "Internal server error" });
+      }
+    });
+    
+  
     app.put('/update-user-post/:id',async(req,res)=>{
       const id = req.params.id;
       const query = {_id:new ObjectId(id)}
@@ -237,56 +281,31 @@ async function run() {
 
     })
 
-    app.get('/todaysMeal', async (req, res) => {
-      const category = req.query.category;
-      const price = req.query.price;
-      const sell = req.query.sell;
-      const searchQuery = req.query.search;
-      const page = parseFloat(req.query.page);
-      const size = parseFloat(req.query.size);  
 
-      console.log([page,size]);
-  
-      let query = {};
-      let sortQuery = {};
-  
-      if (searchQuery) {query.foodName = {$regex: searchQuery, $options: 'i'};}
-      if (category) {query.category = category;}
-      if (sell) {sortQuery.totalSell = (sell === "asc") ?1:-1;}
-      if (price) {
-        const newPrize = new RegExp(`^(${price}\\.\\d+|\\d+\\.\\d+) USD$`, 'i');
-        sortQuery.price = {$regex: newPrize}}
-  
-      try {
-        const data = await restaurantUpload.find(query).sort(sortQuery).skip((page-1)* size).limit(size).toArray();
-
-          res.send(data);
-      } catch (error) {
-          res.status(500).send("Error fetching today's meals");
-      }
-  });
- 
-
-    app.get('/count',async(req,res)=>{
-      const category = req.query.category;
-      const price = req.query.price;
-      const sell = req.query.sell;
-      const searchQuery = req.query.search;
-      const page = parseFloat(req.query.page);
-      const size = parseFloat(req.query.size);  
-
-
-         
-      
-      let query = {};
-      if (searchQuery) {query.foodName = {$regex: searchQuery, $options: 'i'};}
-      if (category) {query.category = category;}
-      if (sell) {sortQuery.totalSell = (sell === "asc") ? -1 : 1;}
+    app.put('/resUpdate/:id',async(req,res)=>{
+      const id=req.params.id;
+      const query = {_id:new ObjectId(id)}
+      const options = {upsert:true};
+      const updateData = req.body;
+      const updateTo = {
+        $set:{
+          "category" : updateData.category,
+          "foodImage":updateData.foodImage ,
+        "foodName":updateData.foodName,
+        "ingredients":updateData.ingredients,
+       "madeBy"  : updateData.madeBy,
+       "origin":updateData.origin,
+       "price":updateData.price,
+       "remain":updateData.remain,
+       "userEmail":updateData.userEmail
+             }}
+      const result = await restaurantUpload.updateMany(query,updateTo,options)
+      res.send(result)
       
 
 
-      const data = await restaurantUpload.countDocuments(query)
-      res.send({data})
+
+      console.log(updateData);
     })
 
 
@@ -308,3 +327,9 @@ app.get('/', (req, res) => {
   app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
   })
+
+
+
+
+         
+      
